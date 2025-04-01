@@ -1,0 +1,278 @@
+openapi: 3.0.0
+info:
+  title: Internal API Documentation
+  description: API documentation for internal services including user, wallet, and exchange operations.
+  version: 1.0.0
+servers:
+  - url: http://{host}/api/v1
+    variables:
+      host:
+        default: localhost
+        enum:
+          - localhost:5002
+
+paths:
+  /api/v1/register:
+    post:
+      summary: Registers a new user.
+      description: Creates a new user account with provided credentials.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        '201':
+          description: User registered successfully
+
+  /api/v1/login:
+    post:
+      summary: Logs in a user.
+      description: Authenticates user with provided credentials and returns JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+
+  /api/v1/balance:
+    get:
+      summary: Gets user's wallet balance.
+      description: Returns the current balance of all currencies in the user's wallet.
+      security:
+        - bearerToken: []
+      responses:
+        '200':
+          description: Balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BalanceResponse"
+
+  /api/v1/wallet/deposit:
+    post:
+      summary: Deposits funds into a wallet.
+      description: Adds specified amount to the user's wallet in the given currency.
+      security:
+        - bearerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepositRequest"
+      responses:
+        '201':
+          description: Funds deposited successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /api/v1/wallet/withdraw:
+    post:
+      summary: Withdraws funds from a wallet.
+      description: Subtracts specified amount from the user's wallet in the given currency.
+      security:
+        - bearerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawRequest"
+      responses:
+        '201':
+          description: Funds withdrawn successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /api/v1/exchange/rates:
+    get:
+      summary: Gets exchange rates.
+      description: Returns current exchange rates for all currencies.
+      responses:
+        '200':
+          description: Exchange rates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeRatesResponse"
+
+  /api/v1/exchange:
+    post:
+      summary: Exchanges funds between currencies.
+      description: Converts specified amount from one currency to another based on current exchange rate.
+      security:
+        - bearerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExchangeRequest"
+      responses:
+        '201':
+          description: Exchange completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+components:
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operation completed successfully
+
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - password
+        - email
+      properties:
+        username:
+          type: string
+          minLength: 3
+          example: johndoe
+        password:
+          type: string
+          minLength: 8
+          example: secret123
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: johndoe
+        password:
+          type: string
+          example: secret123
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+
+    BalanceResponse:
+      type: object
+      properties:
+        wallet:
+          $ref: "#/components/schemas/Wallet"
+
+    Wallet:
+      type: object
+      properties:
+        wallet_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426010102000
+        user_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        rub_amount:
+          type: number
+          format: double
+          example: 100.00
+        usd_amount:
+          type: number
+          format: double
+          example: 100.00
+        eur_amount:
+          type: number
+          format: double
+          example: 100.00
+
+    DepositRequest:
+      type: object
+      required:
+        - currency
+        - amount
+      properties:
+        currency:
+          type: string
+          enum: [RUB, USD, EUR]
+          example: RUB
+        amount:
+          type: number
+          minimum: 0.01
+          format: double
+          example: 100.00
+
+    WithdrawRequest:
+      $ref: "#/components/schemas/DepositRequest"
+
+    ExchangeRequest:
+      type: object
+      required:
+        - from_currency
+        - to_currency
+        - amount
+      properties:
+        from_currency:
+          type: string
+          enum: [RUB, USD, EUR]
+          example: RUB
+        to_currency:
+          type: string
+          enum: [RUB, USD, EUR]
+          example: USD
+        amount:
+          type: number
+          minimum: 0.01
+          format: double
+          example: 100.00
+
+    ExchangeRatesResponse:
+      type: object
+      properties:
+        base_currency:
+          type: string
+          example: USD
+        rates:
+          type: object
+          properties:
+            RUB:
+              type: number
+              example: 75.50
+            USD:
+              type: number
+              example: 1.0
+            EUR:
+              type: number
+              example: 0.85
+
+  securitySchemes:
+    bearerToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
