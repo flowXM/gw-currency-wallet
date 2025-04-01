@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"gw-currency-wallet/internal/config"
 	"net/http"
 	"time"
 )
@@ -30,7 +31,7 @@ func AuthHandler(next http.Handler) http.Handler {
 }
 
 func GenerateRandomSalt() []byte {
-	var salt = make([]byte, saltSize)
+	var salt = make([]byte, config.Cfg.SaltSize)
 	rand.Read(salt[:])
 	return salt
 }
@@ -52,7 +53,7 @@ func GenerateToken(userId string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secretKey))
+	return token.SignedString([]byte(config.Cfg.JWTSecretKey))
 }
 
 func ValidateToken(tokenString string) (*jwt.Token, error) {
@@ -60,14 +61,14 @@ func ValidateToken(tokenString string) (*jwt.Token, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(secretKey), nil
+		return []byte(config.Cfg.JWTSecretKey), nil
 	})
 }
 
 func GetUserId(r *http.Request) string {
 	token := r.Header.Get("Authorization")
 	jt, _ := jwt.Parse(token[7:], func(token *jwt.Token) (interface{}, error) {
-		return []byte(secretKey), nil
+		return []byte(config.Cfg.JWTSecretKey), nil
 	})
 
 	claims := jt.Claims.(jwt.MapClaims)

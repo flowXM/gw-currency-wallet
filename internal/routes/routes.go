@@ -6,6 +6,7 @@ import (
 	"gw-currency-wallet/internal/storages/postgres"
 	"gw-currency-wallet/pkg/utils"
 	"net/http"
+	"reflect"
 )
 
 func Init(mux *http.ServeMux) {
@@ -23,5 +24,9 @@ func Init(mux *http.ServeMux) {
 
 	mux.Handle("GET /api/v1/exchange/rates", utils.RateLimitedHandler(utils.AuthHandler(handlers.HandleExchangeRates(exchangeRepository))))
 	mux.Handle("POST /api/v1/exchange", utils.RateLimitedHandler(utils.AuthHandler(handlers.HandleExchangeWallet(walletRepository))))
+}
 
+func solve(mux *http.ServeMux) {
+	_ = reflect.ValueOf(mux).Elem().FieldByName("tree").FieldByName("emptyChild")
+	//todo если будет время
 }

@@ -10,7 +10,14 @@ import (
 )
 
 func NewClient() (*sql.DB, error) {
-	dsn := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable", config.Cfg.DBHost, config.Cfg.DBPort, config.Cfg.DBUser, config.Cfg.DBName, config.Cfg.DBPassword)
+	dsn := fmt.Sprintf(
+		"host=%s port=%d user=%s dbname=%s password=%s sslmode=disable",
+		config.Cfg.Postgres.Host,
+		config.Cfg.Postgres.Port,
+		config.Cfg.Postgres.User,
+		config.Cfg.Postgres.Name,
+		config.Cfg.Postgres.Password,
+	)
 
 	db, err := DoWithRetries(
 		func() (*sql.DB, error) {
